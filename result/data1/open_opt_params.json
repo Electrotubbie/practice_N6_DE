@@ -1,0 +1,1 @@
+{"date": "uint32", "day_of_week": "category", "v_score": "uint8", "h_score": "uint8", "day_night": "category", "length_minutes": "float32", "v_assists": "float32", "v_errors": "float32", "h_assists": "float32", "h_errors": "float32"}
