@@ -127,10 +127,18 @@ def analyse_dataset(filename_to_analyse, chunksize, filename_to_dump = None, sho
     
     return to_dump
 
-def analyse_dataset_through_columns(filename_to_analyse, chunksize, columns_per_iter = 5, max_ram_mb = 4096, open_params = None, filename_to_dump = None, show = False, compr = None):
+def analyse_dataset_through_columns(filename_to_analyse, 
+                                    chunksize, 
+                                    columns_per_iter = 5, 
+                                    max_ram_mb = 4096, 
+                                    open_params = None, 
+                                    filename_to_dump = None, 
+                                    show = False, 
+                                    compr = None,
+                                    delimiter = None):
     file_size = os.path.getsize(filename_to_analyse)
     # подготовка данных
-    start_data = pd.read_csv(filename_to_analyse, nrows=5, compression=compr).columns
+    start_data = pd.read_csv(filename_to_analyse, nrows=5, compression=compr, delimiter=delimiter).columns
     columns_stats = {
         column: {}
         for column in start_data
@@ -140,7 +148,11 @@ def analyse_dataset_through_columns(filename_to_analyse, chunksize, columns_per_
     volume_rows_cols = 0
     volume_columns_cols = 0
     for i in range(0, len(columns_stats.keys()), columns_per_iter):
-        column_df = pd.read_csv(filename_to_analyse, usecols=list(columns_stats.keys())[i:i+columns_per_iter], dtype=open_params, compression=compr)
+        column_df = pd.read_csv(filename_to_analyse, 
+                                usecols=list(columns_stats.keys())[i:i+columns_per_iter], 
+                                dtype=open_params, 
+                                compression=compr,
+                                delimiter=delimiter)
         memory = column_df.memory_usage(deep=True)
         if (memory.sum() // (1024**2)) > max_ram_mb:
             print(f'Объём памяти дипазона колонок превышен: {memory.sum()}. \
@@ -165,7 +177,11 @@ def analyse_dataset_through_columns(filename_to_analyse, chunksize, columns_per_
         }
     volume_columns_chunks = 0
     volume_rows_cols_chunks = 0
-    for chunk in pd.read_csv(filename_to_analyse, chunksize=chunksize, dtype=open_params, compression=compr):
+    for chunk in pd.read_csv(filename_to_analyse, 
+                             chunksize=chunksize, 
+                             dtype=open_params, 
+                             compression=compr,
+                             delimiter=delimiter):
         chunk_memory_usage_stat = chunk.memory_usage(deep=True)
         total_memory_usage += float(chunk_memory_usage_stat.sum()) # B
         volume_rows_cols_chunks += len(chunk.index)
@@ -197,12 +213,22 @@ def analyse_dataset_through_columns(filename_to_analyse, chunksize, columns_per_
     
     return open_params
 
-def downcast_through_columns(filename_to_analyse, columns_per_iter = 5, max_ram_mb = 4096, open_params = None, show = False, compr = None):
-    columns = pd.read_csv(filename_to_analyse, nrows=5, compression=compr).columns
+def downcast_through_columns(filename_to_analyse, 
+                             columns_per_iter = 5, 
+                             max_ram_mb = 4096, 
+                             open_params = None, 
+                             show = False, 
+                             compr = None,
+                             delimiter=None):
+    columns = pd.read_csv(filename_to_analyse, nrows=5, compression=compr, delimiter=delimiter).columns
     # анализ датасета по колонкам и суммирование RAM по колонкам отдельно
     optimized_open_params = dict()
     for i in range(0, len(columns), columns_per_iter):
-        column_df = pd.read_csv(filename_to_analyse, usecols=columns[i:i+columns_per_iter], dtype=open_params, compression=compr)
+        column_df = pd.read_csv(filename_to_analyse, 
+                                usecols=columns[i:i+columns_per_iter], 
+                                dtype=open_params, 
+                                compression=compr, 
+                                delimiter=delimiter)
         memory = column_df.memory_usage(deep=True)
         if (memory.sum() // (1024**2)) > max_ram_mb:
             print(f'Объём памяти дипазона колонок превышен: {memory.sum()}. \

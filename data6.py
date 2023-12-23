@@ -4,13 +4,11 @@ from support_funcs import *
 from pprint import pprint
 import json
 
-columns_to_analyse = ['schedule_name', 'experience_name', 'employer_name', 
-                      'employer_name', 'salary_from', 'salary_to', 'archived', 
-                      'area_name', 'prof_classes_found', 'accept_incomplete_resumes']
+columns_to_analyse = []
 
-DATASET_NUM = 4
+DATASET_NUM = 6
 DATA_PATH = './data/'
-FILENAME = '[4]vacancies.csv.gz'
+FILENAME = 'Chicago Total Crimes 2001 - 2023.csv'
 file_size = os.path.getsize(f'{DATA_PATH}{FILENAME}')
 RESULT_PATH = f'./result/data{DATASET_NUM}/'
 
@@ -19,7 +17,7 @@ SHOW = False
 CHUNKSIZE = 100_000
 COLUMNS_PER_ITER = 40
 MAX_RAM_MB = 8_192
-COMPRESSION = 'gzip'
+COMPRESSION = None
 
 def main():
     start_dtypes = analyse_dataset_through_columns(f'{DATA_PATH}{FILENAME}', CHUNKSIZE, columns_per_iter=COLUMNS_PER_ITER, 
@@ -33,15 +31,17 @@ def main():
                                     max_ram_mb=MAX_RAM_MB, open_params=optimized_open_params, show=SHOW, 
                                     filename_to_dump=f'{RESULT_PATH}after_opt_stats.json', compr=COMPRESSION)
     
-    params_to_read = read_json(f'{RESULT_PATH}open_opt_params.json')
-    read_to_analyse = pd.read_csv(f'{DATA_PATH}{FILENAME}', 
-                                  usecols=columns_to_analyse,
-                                  dtype=params_to_read)
-    read_to_analyse.to_csv(f'{DATA_PATH}data_{DATASET_NUM}.csv')
-    print(f'Объём RAM прочитанного датасета : {read_to_analyse.memory_usage(deep=True).sum() // (1024**2)} MB')
+    # params_to_read = read_json(f'{RESULT_PATH}open_opt_params.json')
+    # read_to_analyse = pd.read_csv(f'{DATA_PATH}{FILENAME}', 
+    #                               usecols=columns_to_analyse,
+    #                               dtype=params_to_read)
+    # read_to_analyse.to_csv(f'{DATA_PATH}data_{DATASET_NUM}.csv')
+    # print(f'Объём RAM прочитанного датасета : {read_to_analyse.memory_usage(deep=True).sum() // (1024**2)} MB')
 
     # ГРАФИКИ СЮДА
 
 
 if __name__ == '__main__':
     main()
+
+# df = pd.read_csv(f'name', chunksize=chunksize, compression='gzip')

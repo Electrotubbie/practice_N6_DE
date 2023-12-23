@@ -4,7 +4,9 @@ from support_funcs import *
 from pprint import pprint
 import json
 
-columns_to_analyse = []
+columns_to_analyse = ['msrp', 'isNew', 'brandName', 'dealerID', 
+                      'vf_ABS', 'vf_FuelTypePrimary', 'vf_Seats', 
+                      'vf_TopSpeedMPH', 'vf_TransmissionStyle', 'vf_ModelYear']
 
 DATASET_NUM = 2
 DATA_PATH = './data/'
@@ -20,25 +22,23 @@ MAX_RAM_MB = 8_192
 COMPRESSION = 'zip'
 
 def main():
-    start_dtypes = analyse_dataset_through_columns(f'{DATA_PATH}{FILENAME}', CHUNKSIZE, columns_per_iter=COLUMNS_PER_ITER, 
-                                                   max_ram_mb=MAX_RAM_MB, show=SHOW, 
-                                                   filename_to_dump=f'{RESULT_PATH}before_opt_stats.json',
-                                                   compr=COMPRESSION)
-    optimized_open_params = downcast_through_columns(f'{DATA_PATH}{FILENAME}', columns_per_iter=COLUMNS_PER_ITER, max_ram_mb=MAX_RAM_MB, 
-                                                     open_params=start_dtypes, show=SHOW, compr=COMPRESSION)
-    dump_json(optimized_open_params, f'{RESULT_PATH}open_opt_params.json')
-    analyse_dataset_through_columns(f'{DATA_PATH}{FILENAME}', CHUNKSIZE, columns_per_iter=COLUMNS_PER_ITER, 
-                                    max_ram_mb=MAX_RAM_MB, open_params=optimized_open_params, show=SHOW, 
-                                    filename_to_dump=f'{RESULT_PATH}after_opt_stats.json', compr=COMPRESSION)
-        
-
-    # чтение исходного датасета согласно ранее сохранённым параметрам
-    # params_to_read = read_json(f'{RESULT_PATH}open_opt_params.json')
-    # read_to_analyse = pd.read_csv(f'{DATA_PATH}{FILENAME}', 
-    #                               usecols=params_to_read.keys(),
-    #                               dtype=params_to_read,
-    #                               parse_dates=['date'],
-    #                               compression='zip')
+    # start_dtypes = analyse_dataset_through_columns(f'{DATA_PATH}{FILENAME}', CHUNKSIZE, columns_per_iter=COLUMNS_PER_ITER, 
+    #                                                max_ram_mb=MAX_RAM_MB, show=SHOW, 
+    #                                                filename_to_dump=f'{RESULT_PATH}before_opt_stats.json',
+    #                                                compr=COMPRESSION)
+    # optimized_open_params = downcast_through_columns(f'{DATA_PATH}{FILENAME}', columns_per_iter=COLUMNS_PER_ITER, max_ram_mb=MAX_RAM_MB, 
+    #                                                  open_params=start_dtypes, show=SHOW, compr=COMPRESSION)
+    # dump_json(optimized_open_params, f'{RESULT_PATH}open_opt_params.json')
+    # analyse_dataset_through_columns(f'{DATA_PATH}{FILENAME}', CHUNKSIZE, columns_per_iter=COLUMNS_PER_ITER, 
+    #                                 max_ram_mb=MAX_RAM_MB, open_params=optimized_open_params, show=SHOW, 
+    #                                 filename_to_dump=f'{RESULT_PATH}after_opt_stats.json', compr=COMPRESSION)
+    
+    params_to_read = read_json(f'{RESULT_PATH}open_opt_params.json')
+    read_to_analyse = pd.read_csv(f'{DATA_PATH}{FILENAME}', 
+                                  usecols=columns_to_analyse,
+                                  dtype=params_to_read)
+    read_to_analyse.to_csv(f'{DATA_PATH}data_{DATASET_NUM}.csv')
+    print(f'Объём RAM прочитанного датасета : {read_to_analyse.memory_usage(deep=True).sum() // (1024**2)} MB')
 
     # ГРАФИКИ СЮДА
 
