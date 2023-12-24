@@ -81,52 +81,6 @@ def downcasting_digits(df, show = False):
         print(compare)
     return df
 
-def analyse_dataset(filename_to_analyse, chunksize, filename_to_dump = None, show = False):
-    file_size = os.path.getsize(filename_to_analyse)
-    # подготовка данных
-    total_memory_usage = 0
-    start_data = next(pd.read_csv(filename_to_analyse, chunksize=10_000))
-    columns_stats = {
-        column: {
-            'memory_abs': 0,
-            'memory_per': 0,
-            'dtype': str(start_data.dtypes[column])
-        }
-        for column in start_data
-    }
-    # анализ датасета по чанкам и суммирование RAM в общем и по колонкам отдельно
-    for chunk in pd.read_csv(filename_to_analyse, chunksize=chunksize):
-        chunk_memory_usage_stat = chunk.memory_usage(deep=True)
-        total_memory_usage += float(chunk_memory_usage_stat.sum()) # B
-        for column in chunk:
-            columns_stats[column]['memory_abs'] += float(chunk_memory_usage_stat[column]) # B
-            if str(chunk.dtypes[column]) != columns_stats[column]['dtype']:
-                print(f'ТИПЫ {column}. ИСХОДНЫЙ {columns_stats[column]["dtype"]}. ТЕКУЩИЙ {str(chunk.dtypes[column])}')
-    # расчёт относительного количества памяти для столбцов
-    for col in columns_stats.keys():
-        columns_stats[col]['memory_per'] = round(columns_stats[col]['memory_abs'] / total_memory_usage * 100, 4) # B/B * 100 = %
-        columns_stats[col]['memory_abs'] = columns_stats[col]['memory_abs'] // 1024 # KB
-    # подготовка словаря к дампу
-    columns_stats = dict(sorted(list(columns_stats.items()), key=lambda x: x[1]['memory_abs'], reverse=True))
-    to_dump = {
-        'file_size': file_size // 1024, # KB
-        'file_in_memory_size': total_memory_usage // 1024, # KB
-        'columns_stats': columns_stats
-    }
-    if filename_to_dump:
-        dump_json(to_dump, filename_to_dump)
-    # отображение информации
-    if show:
-        print(f'file size           = {file_size // 1024:10} КБ')
-        print(f'file in memory size = {total_memory_usage // 1024:10} КБ')
-        for col in columns_stats.keys():
-            print(f'{col:30}: \
-                    {columns_stats[col]["memory_abs"]:5} КБ: \
-                    {columns_stats[col]["memory_per"]:5} %: \
-                    {columns_stats[col]["dtype"]}')
-    
-    return to_dump
-
 def analyse_dataset_through_columns(filename_to_analyse, 
                                     chunksize, 
                                     columns_per_iter = 5, 
