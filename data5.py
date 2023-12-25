@@ -2,7 +2,10 @@ import pandas as pd
 import os
 from support_funcs import *
 from pprint import pprint
-import json
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+sns.set_style("ticks",{'axes.grid' : True})
 
 columns_to_analyse = ['name', 'neo', 'H', 'diameter', 'orbit_id', 'om', 'w', 'moid', 'class', 'rms']
 
@@ -19,17 +22,35 @@ COLUMNS_PER_ITER = 40
 MAX_RAM_MB = 8_192
 COMPRESSION = 'zip'
 
+def plot1(df):
+    sns.heatmap(df.isnull(), cbar = False).set_title("Missing values").get_figure().savefig(f'{RESULT_PATH}1plot.png')
+
+def plot2(df):
+    sns.barplot(df.groupby(['class'], as_index=False)['H'].mean(), 
+        x='class', 
+        y='H').get_figure().savefig(f'{RESULT_PATH}2plot.png')
+
+def plot3(df):
+    df.plot.scatter(x='rms', y='om').get_figure().savefig(f'{RESULT_PATH}3plot.png')
+
+def plot4(df):
+    df.drop(957691).plot.scatter(x='rms', y='om').get_figure().savefig(f'{RESULT_PATH}4plot.png')
+
+def plot5(df):
+    corr = df.select_dtypes(['int', 'float',]).corr().abs()
+    sns.heatmap(corr, annot=True).get_figure().savefig(f'{RESULT_PATH}5plot.png')
+
 def main():
-    # start_dtypes = analyse_dataset_through_columns(f'{DATA_PATH}{FILENAME}', CHUNKSIZE, columns_per_iter=COLUMNS_PER_ITER, 
-    #                                                max_ram_mb=MAX_RAM_MB, show=SHOW, 
-    #                                                filename_to_dump=f'{RESULT_PATH}before_opt_stats.json',
-    #                                                compr=COMPRESSION)
-    # optimized_open_params = downcast_through_columns(f'{DATA_PATH}{FILENAME}', columns_per_iter=COLUMNS_PER_ITER, max_ram_mb=MAX_RAM_MB, 
-    #                                                  open_params=start_dtypes, show=SHOW, compr=COMPRESSION)
-    # dump_json(optimized_open_params, f'{RESULT_PATH}open_opt_params.json')
-    # analyse_dataset_through_columns(f'{DATA_PATH}{FILENAME}', CHUNKSIZE, columns_per_iter=COLUMNS_PER_ITER, 
-    #                                 max_ram_mb=MAX_RAM_MB, open_params=optimized_open_params, show=SHOW, 
-    #                                 filename_to_dump=f'{RESULT_PATH}after_opt_stats.json', compr=COMPRESSION)
+    start_dtypes = analyse_dataset_through_columns(f'{DATA_PATH}{FILENAME}', CHUNKSIZE, columns_per_iter=COLUMNS_PER_ITER, 
+                                                   max_ram_mb=MAX_RAM_MB, show=SHOW, 
+                                                   filename_to_dump=f'{RESULT_PATH}before_opt_stats.json',
+                                                   compr=COMPRESSION)
+    optimized_open_params = downcast_through_columns(f'{DATA_PATH}{FILENAME}', columns_per_iter=COLUMNS_PER_ITER, max_ram_mb=MAX_RAM_MB, 
+                                                     open_params=start_dtypes, show=SHOW, compr=COMPRESSION)
+    dump_json(optimized_open_params, f'{RESULT_PATH}open_opt_params.json')
+    analyse_dataset_through_columns(f'{DATA_PATH}{FILENAME}', CHUNKSIZE, columns_per_iter=COLUMNS_PER_ITER, 
+                                    max_ram_mb=MAX_RAM_MB, open_params=optimized_open_params, show=SHOW, 
+                                    filename_to_dump=f'{RESULT_PATH}after_opt_stats.json', compr=COMPRESSION)
     
     params_to_read = read_json(f'{RESULT_PATH}open_opt_params.json')
     read_to_analyse = pd.read_csv(f'{DATA_PATH}{FILENAME}', 
@@ -38,7 +59,20 @@ def main():
     read_to_analyse.to_csv(f'{DATA_PATH}data_{DATASET_NUM}.csv')
     print(f'Объём RAM прочитанного датасета : {read_to_analyse.memory_usage(deep=True).sum() // (1024**2)} MB')
 
-    # ГРАФИКИ СЮДА
+    # 5.1. Визуальный анализ отсутствующих значений
+    plot1(read_to_analyse)
+
+    # 5.2 Средняя H в зависимости от class
+    plot2(read_to_analyse)
+
+    # 5.3. Замечен всплеск
+    plot3(read_to_analyse)
+
+    # 5.4. Без всплеска стало лучше
+    plot4(read_to_analyse)
+
+    # 5.5. Корреляция числовых значений таблицы
+    plot5(read_to_analyse)
 
 
 if __name__ == '__main__':
